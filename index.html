@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/0.9.16/socket.io.min.js"></script>
+    <script>
+//        var socket = io.connect('http://localhost');
+//        socket.on('news', function (data) {
+//            console.log(data);
+//            socket.emit('my other event', { my: 'data' });
+//        });
+        $(document).ready(function () {
+            var socket = io.connect('http://dm405-02:1000');
+
+            $("html").mousemove(function(e){
+                var pageCoords = "( " + e.pageX + ", " + e.pageY + " )";
+                var clientCoords = "( " + e.clientX + ", " + e.clientY + " )";
+
+
+
+                if (e.which === 1 && e.button === 0)
+                {
+                    socket.emit("mouseMove",{x:e.offsetX,y:e.offsetY});
+                }
+                else
+                {
+                    socket.emit("mouseUp");
+                }
+
+            });
+
+            $("html").mouseup(function(e){
+                console.log('Mouse Up!')
+                socket.emit("mouseUp");
+            });
+
+
+
+            function draw(x, y, prevx, prevy, colour) {
+//            console.log('Drawing line - x: ' + x + 'y: ' + y + 'prevx: ' + prevx + 'prevy: ' + prevy + 'colour: ' + colour + ' ' )
+                var ctx=document.getElementById("myCanvas").getContext("2d");
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(prevx, prevy);
+                ctx.strokeStyle = colour;
+                ctx.strokeWeight = "6px";
+                ctx.stroke();
+            }
+
+            function drawdot(x, y, colour) {
+//            console.log('Drawing dot: x: ' + x + 'y: ' + y + 'colour: ' + colour + ' ' )
+                var ctx=document.getElementById("myCanvas").getContext("2d");
+                ctx.beginPath();
+                ctx.arc(x, y, 1, 0, 2 * Math.PI);
+                ctx.fillStyle = colour;
+                ctx.fill();
+            }
+
+            socket.on('mouseMove', function (map) {
+                $("span").text(JSON.stringify(map));
+                for (id in map){
+                    var coords=map[id];
+
+                    if (coords.prev.x && coords.prev.y && !(coords.prev.x === coords.x && coords.prev.y === coords.y))
+                    {
+                        draw(coords.x,coords.y,coords.prev.x, coords.prev.y, coords.colour);
+                    }
+                    else
+                    {
+                        drawdot(coords.x,coords.y, coords.colour)
+                    }
+
+                }
+            });
+
+            $('#messagebox').keypress(function(e){
+                if (e.charCode === 13)
+                {
+                    socket.emit("sendMessage", $('#messagebox').val());
+                    $('#messagebox').val("");
+                }
+
+            });
+
+            socket.on('receiveMessage', function(message) {
+                handleNewMessage(message);
+            });
+
+            function handleNewMessage(message)
+            {
+                var text = message.replace(/(<([^>]+)>)/ig,"");
+                var myDate = new Date();
+                $('#messages').prepend("<div>"+text+"</div>")
+            };
+        });
+
+
+
+
+    </script>
+    <style>
+        body
+        {
+            margin: 0px;
+            overflow: hidden;
+        }
+        canvas
+        {
+            width: 3000px;
+            height: 1000px;
+            cursor: pointer;
+        }
+        .messagewindow
+        {
+            height: 100px;
+            overflow: scroll;
+            background: lightgrey;
+        }
+        #messagebox
+        {
+            width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="messagewindow">
+        <input id="messagebox" placeholder="Type in a message and hit enter" autocomplete="false">
+        <div id="messages"></div>
+    </div>
+    <div style="overflow: hidden;">
+        <canvas height="1000px" width="3000px" id="myCanvas"></canvas>
+    </div>
+
+</body>
+</html>

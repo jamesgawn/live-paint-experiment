@@ -1,0 +1,11 @@
+{
+    "name": "LivePaintExperiment",
+    "description": "This is a test project to let me experiment with services and socket.io",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "express": "3.x",
+        "socket.io": "0.9.x",
+        "moment": "2.x"
+    }
+}
